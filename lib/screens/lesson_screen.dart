@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import '../theme/app_theme.dart';
 import '../data/levels_data.dart';
@@ -85,8 +85,8 @@ class _LessonScreenState extends State<LessonScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('عذراً، الصوت غير متوفر حالياً'),
-            duration: Duration(seconds: 2),
+            content: const Text('عذراً، الصوت غير متوفر حالياً'),
+            duration: const Duration(seconds: 2),
             backgroundColor: AppTheme.warningOrange,
           ),
         );
@@ -96,21 +96,28 @@ class _LessonScreenState extends State<LessonScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final isSmallHeight = size.height < 450;
+
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFFFFF4E6), Color(0xFFFFE6F0)],
+            colors: [Color(0xFFFFF7ED), Color(0xFFFFEDD5), Color(0xFFEFF6FF)],
           ),
         ),
         child: SafeArea(
           child: Stack(
             children: [
+              // جسم الصفحة الرئيسي
               Column(
                 children: [
-                  SizedBox(height: 60),
+                  // شريط التحكم العلوي المدمج
+                  _buildTopHeader(isSmallHeight),
+
+                  // محتوى الحرف المتجاوب (Side-by-Side)
                   Expanded(
                     child: PageView.builder(
                       controller: _pageController,
@@ -120,130 +127,43 @@ class _LessonScreenState extends State<LessonScreen> {
                         setState(() => _currentLetterIndex = index);
                       },
                       itemBuilder: (context, index) =>
-                          _buildLetterPage(letters[index]),
+                          _buildLetterPage(letters[index], isSmallHeight),
                     ),
                   ),
                 ],
               ),
 
-              // زر الإغلاق
-              Positioned(
-                top: 10,
-                right: 10,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                          color: Colors.black.withOpacity(0.1), blurRadius: 10)
-                    ],
-                  ),
-                  child: IconButton(
-                    icon: Icon(Icons.close, color: Colors.red[400], size: 28),
-                    onPressed: _showExitDialog,
+              // زر السهم السابق (على اليمين)
+              if (_currentLetterIndex > 0)
+                Positioned(
+                  right: 12,
+                  top: size.height * 0.45,
+                  child: _buildNavArrow(
+                    icon: Icons.chevron_right,
+                    onTap: () {
+                      _pageController.previousPage(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      );
+                    },
                   ),
                 ),
-              ),
 
-              // زر الحرف التالي (يظهر إلا في الحرف الأخير)
+              // زر السهم التالي (على اليسار)
               if (_currentLetterIndex < letters.length - 1)
                 Positioned(
-                  bottom: 20,
-                  left: 0,
-                  right: 0,
-                  child: Center(
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        _pageController.nextPage(
-                          duration: const Duration(milliseconds: 350),
-                          curve: Curves.easeInOut,
-                        );
-                      },
-                      icon: const Icon(Icons.arrow_back, size: 24),
-                      label: const Text(
-                        'الحرف التالي',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primarySkyBlue,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        elevation: 8,
-                        shadowColor: AppTheme.primarySkyBlue.withOpacity(0.5),
-                      ),
-                    ),
+                  left: 12,
+                  top: size.height * 0.45,
+                  child: _buildNavArrow(
+                    icon: Icons.chevron_left,
+                    onTap: () {
+                      _pageController.nextPage(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      );
+                    },
                   ),
                 ),
-
-              // زر إنهاء الدرس (يظهر فقط عند الحرف الأخير)
-              if (_currentLetterIndex == letters.length - 1)
-                Positioned(
-                  bottom: 20,
-                  left: 0,
-                  right: 0,
-                  child: Center(
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        LevelTestDialog.show(context,
-                            letters: letters, lessonId: widget.lessonId);
-                      },
-                      icon: Icon(Icons.check_circle, size: 28),
-                      label: Text('إنهاء الدرس والبدء بالاختبار',
-                          style: TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.successGreen,
-                        foregroundColor: Colors.white,
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 40, vertical: 16),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30)),
-                        elevation: 8,
-                        shadowColor: AppTheme.successGreen.withOpacity(0.5),
-                      ),
-                    ),
-                  ),
-                ),
-
-              // مؤشر التقدم
-              Positioned(
-                top: 15,
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 10)
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.auto_stories,
-                            color: AppTheme.primarySkyBlue, size: 20),
-                        SizedBox(width: 8),
-                        Text(
-                          'حرف ${_currentLetterIndex + 1} من ${letters.length}',
-                          style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.primarySkyBlue),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
             ],
           ),
         ),
@@ -251,100 +171,125 @@ class _LessonScreenState extends State<LessonScreen> {
     );
   }
 
-  Widget _buildLetterPage(String letter) {
-    return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
-      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-      child: Column(
+  // شريط علوي أنيق ومدمج
+  Widget _buildTopHeader(bool isSmallHeight) {
+    return Padding(
+      padding: EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: isSmallHeight ? 6 : 10,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // 1. عنوان + الحرف
-          Text('تعلم حرف',
-              style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.primarySkyBlue)),
-          SizedBox(height: 15),
+          // زر الإغلاق
           Container(
-            width: 140,
-            height: 140,
             decoration: BoxDecoration(
               color: Colors.white,
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                    color: AppTheme.primarySkyBlue.withOpacity(0.3),
-                    blurRadius: 30,
-                    offset: Offset(0, 10))
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 8,
+                ),
               ],
             ),
-            child: Center(
-                child: Text(letter,
-                    style: TextStyle(
-                        fontSize: 85,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.primarySkyBlue))),
-          ),
-
-          SizedBox(height: 25),
-
-          // 2. زر الاستماع
-          Text('اضغط للاستماع',
-              style: TextStyle(
-                  fontSize: 16,
-                  color: AppTheme.textDark,
-                  fontWeight: FontWeight.w600)),
-          SizedBox(height: 12),
-          GestureDetector(
-            onTap: _playSound,
-            child: Container(
-              padding: EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                    colors: [AppTheme.warningOrange, Colors.orange[300]!]),
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                      color: AppTheme.warningOrange.withOpacity(0.4),
-                      blurRadius: 20,
-                      offset: Offset(0, 8))
-                ],
-              ),
-              child: Icon(Icons.volume_up, size: 45, color: Colors.white),
+            child: IconButton(
+              icon: Icon(Icons.close, color: Colors.red[400], size: isSmallHeight ? 20 : 24),
+              onPressed: _showExitDialog,
+              padding: EdgeInsets.all(isSmallHeight ? 6 : 8),
+              constraints: const BoxConstraints(),
             ),
           ),
 
-          SizedBox(height: 30),
+          // مؤشر التقدم (حرف X من Y)
+          Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: isSmallHeight ? 14 : 20,
+              vertical: isSmallHeight ? 4 : 8,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 8,
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.auto_stories,
+                    color: AppTheme.primarySkyBlue, size: isSmallHeight ? 16 : 20),
+                const SizedBox(width: 8),
+                Text(
+                  'حرف ${_currentLetterIndex + 1} من ${letters.length}',
+                  style: TextStyle(
+                    fontSize: isSmallHeight ? 14 : 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.primarySkyBlue,
+                  ),
+                ),
+              ],
+            ),
+          ),
 
-          // 3. فيديو رسم الحرف
-          _buildVideoSection(letter),
-
-          SizedBox(height: 25),
-
-          // 4. الأمثلة
-          _buildExamplesSection(letter),
-
-          SizedBox(height: 30),
-
-          // 5. تلميح التمرير
+          // زر الانتقال للتالي أو الاختبار في الزاوية
           if (_currentLetterIndex < letters.length - 1)
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              decoration: BoxDecoration(
-                color: AppTheme.primarySkyBlue.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(20),
+            ElevatedButton.icon(
+              onPressed: () {
+                _pageController.nextPage(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                );
+              },
+              icon: const Icon(Icons.arrow_back, size: 16),
+              label: Text(
+                'التالي',
+                style: TextStyle(
+                  fontSize: isSmallHeight ? 13 : 15,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.swipe_left,
-                      color: AppTheme.primarySkyBlue, size: 24),
-                  SizedBox(width: 10),
-                  Text('مرر لليسار للحرف التالي',
-                      style: TextStyle(
-                          fontSize: 14,
-                          color: AppTheme.primarySkyBlue,
-                          fontWeight: FontWeight.w600)),
-                ],
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primarySkyBlue,
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(
+                  horizontal: isSmallHeight ? 12 : 18,
+                  vertical: isSmallHeight ? 6 : 10,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                elevation: 3,
+              ),
+            )
+          else
+            ElevatedButton.icon(
+              onPressed: () {
+                LevelTestDialog.show(context,
+                    letters: letters, lessonId: widget.lessonId);
+              },
+              icon: const Icon(Icons.check_circle, size: 18),
+              label: Text(
+                'بدء الاختبار',
+                style: TextStyle(
+                  fontSize: isSmallHeight ? 13 : 15,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.successGreen,
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(
+                  horizontal: isSmallHeight ? 14 : 20,
+                  vertical: isSmallHeight ? 6 : 10,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                elevation: 4,
               ),
             ),
         ],
@@ -352,84 +297,286 @@ class _LessonScreenState extends State<LessonScreen> {
     );
   }
 
-  Widget _buildVideoSection(String letter) {
-    print('🎥 فيديو الحرف: $letter');
-    return LetterVideoPlayer(letter: letter);
+  // سهم تنقل جانبي عائم
+  Widget _buildNavArrow({required IconData icon, required VoidCallback onTap}) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(30),
+        child: Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.9),
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.12),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Icon(icon, color: AppTheme.primarySkyBlue, size: 28),
+        ),
+      ),
+    );
   }
 
-  Widget _buildExamplesSection(String letter) {
+  // صفحة الحرف بالتقسيم الأفقي الذكي (Side-by-Side)
+  Widget _buildLetterPage(String letter, bool isSmallHeight) {
+    return Padding(
+      padding: EdgeInsets.symmetric(
+        horizontal: isSmallHeight ? 24 : 36,
+        vertical: isSmallHeight ? 4 : 8,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // 1️⃣ الجانب الأيمن: بطاقة الحرف، الصوت، والأمثلة
+          Expanded(
+            flex: 5,
+            child: Container(
+              padding: EdgeInsets.all(isSmallHeight ? 10 : 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.primarySkyBlue.withOpacity(0.12),
+                    blurRadius: 15,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          // صف الحرف + زر الاستماع
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              // بطاقة الحرف
+                              Container(
+                                width: isSmallHeight ? 75 : 95,
+                                height: isSmallHeight ? 75 : 95,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      Colors.white,
+                                      AppTheme.lightSkyBlue.withOpacity(0.3),
+                                    ],
+                                  ),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: AppTheme.primarySkyBlue.withOpacity(0.5),
+                                    width: 3,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppTheme.primarySkyBlue.withOpacity(0.25),
+                                      blurRadius: 15,
+                                      offset: const Offset(0, 5),
+                                    ),
+                                  ],
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    letter,
+                                    style: TextStyle(
+                                      fontSize: isSmallHeight ? 46 : 60,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppTheme.primarySkyBlue,
+                                    ),
+                                  ),
+                                ),
+                              ),
+
+                              const SizedBox(width: 20),
+
+                              // زر الاستماع للصوت
+                              GestureDetector(
+                                onTap: _playSound,
+                                child: Container(
+                                  padding: EdgeInsets.all(isSmallHeight ? 12 : 16),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        AppTheme.warningOrange,
+                                        Colors.orange[400]!,
+                                      ],
+                                    ),
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: AppTheme.warningOrange.withOpacity(0.4),
+                                        blurRadius: 12,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.volume_up_rounded,
+                                        size: isSmallHeight ? 28 : 36,
+                                        color: Colors.white,
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        'استمع',
+                                        style: TextStyle(
+                                          fontSize: isSmallHeight ? 10 : 12,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          SizedBox(height: isSmallHeight ? 6 : 10),
+
+                          // الكلمات والأمثلة في سطر أفقي مدمج
+                          _buildCompactExamplesSection(letter, isSmallHeight),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+
+          const SizedBox(width: 14),
+
+          // 2️⃣ الجانب الأيسر: مشغل فيديو رسم الحرف
+          Expanded(
+            flex: 6,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.successGreen.withOpacity(0.12),
+                    blurRadius: 15,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: LetterVideoPlayer(letter: letter),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // قسم أمثلة الكلمات المدمجة أفقياً
+  Widget _buildCompactExamplesSection(String letter, bool isSmallHeight) {
     final examples = LetterExamplesData.getExamples(letter);
 
     return Container(
-      padding: EdgeInsets.all(20),
+      padding: EdgeInsets.symmetric(
+        horizontal: 10,
+        vertical: isSmallHeight ? 6 : 10,
+      ),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(25),
-        border: Border.all(color: AppTheme.starYellow, width: 3),
-        boxShadow: [
-          BoxShadow(
-              color: AppTheme.starYellow.withOpacity(0.2),
-              blurRadius: 15,
-              offset: Offset(0, 5))
-        ],
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppTheme.starYellow.withOpacity(0.8), width: 1.5),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.lightbulb, color: AppTheme.starYellow, size: 28),
-              SizedBox(width: 10),
-              Text('كلمات تبدأ بهذا الحرف',
-                  style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.primarySkyBlue)),
+              Icon(Icons.auto_awesome, color: AppTheme.starYellow, size: isSmallHeight ? 14 : 18),
+              const SizedBox(width: 6),
+              Text(
+                'كلمات تبدأ بالحرف',
+                style: TextStyle(
+                  fontSize: isSmallHeight ? 12 : 14,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textDark,
+                ),
+              ),
             ],
           ),
-          SizedBox(height: 15),
-          Wrap(
-            spacing: 15,
-            runSpacing: 15,
-            alignment: WrapAlignment.center,
-            children:
-                examples.map((example) => _buildExampleCard(example)).toList(),
+          SizedBox(height: isSmallHeight ? 6 : 8),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: examples
+                  .map((example) => _buildCompactExampleCard(example, isSmallHeight))
+                  .toList(),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildExampleCard(Map<String, String> example) {
+  Widget _buildCompactExampleCard(Map<String, String> example, bool isSmallHeight) {
+    final cardWidth = isSmallHeight ? 65.0 : 78.0;
+
     return Container(
-      width: 100,
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      width: cardWidth,
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-            Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                color: AppTheme.lightSkyBlue.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(15),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(15),
-                child: Center(
-                  child: Text(
-                    example['emoji']!,
-                    style: TextStyle(fontSize: 60),
-                  ),
+          Container(
+            width: cardWidth,
+            height: isSmallHeight ? 48 : 58,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 4,
                 ),
+              ],
+            ),
+            child: Center(
+              child: Text(
+                example['emoji'] ?? '🌟',
+                style: TextStyle(fontSize: isSmallHeight ? 28 : 34),
               ),
             ),
-          SizedBox(height: 8),
+          ),
+          const SizedBox(height: 4),
           Text(
-            example['word']!,
+            example['word'] ?? '',
             style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.textDark),
+              fontSize: isSmallHeight ? 11 : 13,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.textDark,
+            ),
             textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
@@ -440,20 +587,23 @@ class _LessonScreenState extends State<LessonScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('هل تريد الخروج؟', textAlign: TextAlign.center),
-        content: Text('لم تنهي جميع الحروف بعد. هل تريد الخروج؟',
-            textAlign: TextAlign.center),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('هل تريد الخروج؟', textAlign: TextAlign.center),
+        content: const Text(
+          'لم تنهِ جميع الحروف بعد. هل تريد الخروج للرئيسية؟',
+          textAlign: TextAlign.center,
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('متابعة التعلم'),
+            child: const Text('متابعة التعلم'),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
               Navigator.pop(context);
             },
-            child: Text('خروج', style: TextStyle(color: Colors.red)),
+            child: const Text('خروج', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
