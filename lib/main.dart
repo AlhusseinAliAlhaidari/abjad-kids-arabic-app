@@ -61,7 +61,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'تعليم اللغة العربية',
+      title: 'أبجد للأطفال',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
 

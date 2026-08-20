@@ -163,7 +163,7 @@ class _SplashScreenState extends State<SplashScreen>
                             border: Border.all(color: Colors.white.withOpacity(0.5), width: 2),
                           ),
                           child: Text(
-                            'تعليم اللغة العربية',
+                            'أبجد للأطفال',
                             style: TextStyle(
                               fontSize: 36,
                               fontWeight: FontWeight.bold,
