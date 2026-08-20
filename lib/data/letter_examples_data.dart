@@ -336,6 +336,15 @@ class LetterExamplesData {
   };
 
   static List<Map<String, String>> getExamples(String letter) {
-    return examples[letter] ?? [];
+    if (examples.containsKey(letter)) {
+      return examples[letter]!;
+    }
+    // محاولة البحث عن الحرف بدون همزة أو التشكيل
+    final normalized = letter
+        .replaceAll('أ', 'ا')
+        .replaceAll('إ', 'ا')
+        .replaceAll('آ', 'ا')
+        .replaceAll('ء', 'ا');
+    return examples[normalized] ?? [];
   }
 }

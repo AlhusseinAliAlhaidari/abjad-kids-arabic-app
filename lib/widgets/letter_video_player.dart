@@ -1,12 +1,19 @@
-﻿import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import '../theme/app_theme.dart';
 
 class LetterVideoPlayer extends StatefulWidget {
   final String letter;
+  final bool showTitle;
+  final bool compact;
 
-  const LetterVideoPlayer({super.key, required this.letter});
+  const LetterVideoPlayer({
+    super.key,
+    required this.letter,
+    this.showTitle = true,
+    this.compact = false,
+  });
 
   @override
   State<LetterVideoPlayer> createState() => _LetterVideoPlayerState();
@@ -42,7 +49,7 @@ class _LetterVideoPlayerState extends State<LetterVideoPlayer> {
       if (kIsWeb) {
         final encodedFileName = Uri.encodeComponent('$fileName.mp4');
         final webUri = Uri.base.resolve('assets/videos/letters/$encodedFileName');
-        
+
         try {
           _controller = VideoPlayerController.networkUrl(webUri);
           await _controller!.initialize();
@@ -65,7 +72,7 @@ class _LetterVideoPlayerState extends State<LetterVideoPlayer> {
         _controller!.play();
       }
     } catch (e) {
-      print('❌ خطأ في تحميل الفيديو: $e');
+      debugPrint('❌ خطأ في تحميل الفيديو: $e');
       if (mounted) {
         setState(() {
           _hasError = true;
@@ -116,197 +123,289 @@ class _LetterVideoPlayerState extends State<LetterVideoPlayer> {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    final isSmallHeight = size.height < 450;
-
-    return Padding(
-      padding: EdgeInsets.all(isSmallHeight ? 8 : 14),
-      child: Column(
-        children: [
-          // شريط عنوان الفيديو
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.brush_rounded,
-                  color: AppTheme.successGreen, size: isSmallHeight ? 16 : 22),
-              const SizedBox(width: 6),
-              Text(
-                'شاهد كيف يُكتب الحرف',
-                style: TextStyle(
-                  fontSize: isSmallHeight ? 13 : 16,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.primarySkyBlue,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: isSmallHeight ? 4 : 8),
-
-          // منطقة الفيديو
-          Expanded(
-            child: _hasError
-                ? _buildErrorWidget(isSmallHeight)
-                : !_isInitialized
-                    ? _buildLoadingWidget(isSmallHeight)
-                    : _buildVideoWidget(isSmallHeight),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLoadingWidget(bool isSmallHeight) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          CircularProgressIndicator(
-            color: AppTheme.primarySkyBlue,
-            strokeWidth: isSmallHeight ? 2.5 : 3.5,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'جاري تجهيز الفيديو...',
-            style: TextStyle(
-              fontSize: isSmallHeight ? 11 : 13,
-              color: Colors.grey[600],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildErrorWidget(bool isSmallHeight) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.video_library_outlined,
-            size: isSmallHeight ? 36 : 48,
-            color: AppTheme.primarySkyBlue.withOpacity(0.6),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'فيديو رسم الحرف ${widget.letter}',
-            style: TextStyle(
-              fontSize: isSmallHeight ? 13 : 15,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.primarySkyBlue,
-            ),
-          ),
-          const SizedBox(height: 8),
-          ElevatedButton.icon(
-            onPressed: () {
-              setState(() {
-                _hasError = false;
-                _isInitialized = false;
-              });
-              _initializeVideo();
-            },
-            icon: const Icon(Icons.refresh, size: 16),
-            label: const Text('إعادة المحاولة', style: TextStyle(fontSize: 12)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primarySkyBlue,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildVideoWidget(bool isSmallHeight) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // مشغل الفيديو
-        Expanded(
-          child: Center(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(14),
-              child: AspectRatio(
-                aspectRatio: _controller!.value.aspectRatio > 0
-                    ? _controller!.value.aspectRatio
-                    : 16 / 9,
-                child: VideoPlayer(_controller!),
-              ),
+        if (widget.showTitle)
+          Padding(
+            padding: EdgeInsets.only(
+              top: widget.compact ? 2 : 6,
+              bottom: widget.compact ? 4 : 8,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: AppTheme.successGreen.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.edit_note_rounded,
+                    color: AppTheme.successGreen,
+                    size: 16,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'طريقة كتابة الحرف (${widget.letter})',
+                  style: TextStyle(
+                    fontSize: widget.compact ? 12 : 14,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.textDark,
+                  ),
+                ),
+              ],
             ),
           ),
-        ),
-        SizedBox(height: isSmallHeight ? 4 : 8),
 
-        // شريط التقدم والتحكم المدمج
-        Row(
+        // منطقة الفيديو
+        if (_hasError)
+          _buildErrorWidget()
+        else if (!_isInitialized)
+          _buildLoadingWidget()
+        else
+          _buildVideoWidget(),
+      ],
+    );
+  }
+
+  Widget _buildLoadingWidget() {
+    return Container(
+      height: widget.compact ? 130 : 170,
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F5F9),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Center(
+        child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // زر التشغيل/الإيقاف
+            const SizedBox(
+              width: 28,
+              height: 28,
+              child: CircularProgressIndicator(
+                color: AppTheme.primarySkyBlue,
+                strokeWidth: 3,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'جاري تحضير رسم الحرف...',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: Colors.blueGrey[600],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorWidget() {
+    return Container(
+      height: widget.compact ? 130 : 170,
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF1F2),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFFFECDD3),
+          width: 1.5,
+        ),
+      ),
+      padding: const EdgeInsets.all(12),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.play_lesson_rounded,
+              size: 32,
+              color: AppTheme.warningOrange.withValues(alpha: 0.8),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'فيديو كتابة حرف (${widget.letter})',
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.textDark,
+              ),
+            ),
+            const SizedBox(height: 6),
             InkWell(
               onTap: () {
                 setState(() {
-                  if (_controller!.value.isPlaying) {
-                    _controller!.pause();
-                  } else {
-                    _controller!.play();
-                  }
+                  _hasError = false;
+                  _isInitialized = false;
                 });
+                _initializeVideo();
               },
-              borderRadius: BorderRadius.circular(20),
-              child: Padding(
-                padding: const EdgeInsets.all(4),
-                child: Icon(
-                  _controller!.value.isPlaying
-                      ? Icons.pause_circle_filled_rounded
-                      : Icons.play_circle_filled_rounded,
-                  size: isSmallHeight ? 28 : 36,
+              borderRadius: BorderRadius.circular(14),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                decoration: BoxDecoration(
                   color: AppTheme.primarySkyBlue,
+                  borderRadius: BorderRadius.circular(14),
                 ),
-              ),
-            ),
-
-            const SizedBox(width: 8),
-
-            // شريط التقدم
-            Expanded(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(6),
-                child: VideoProgressIndicator(
-                  _controller!,
-                  allowScrubbing: true,
-                  colors: VideoProgressColors(
-                    playedColor: AppTheme.primarySkyBlue,
-                    bufferedColor: AppTheme.lightSkyBlue,
-                    backgroundColor: Colors.grey[200]!,
-                  ),
-                ),
-              ),
-            ),
-
-            const SizedBox(width: 8),
-
-            // زر إعادة التشغيل
-            InkWell(
-              onTap: () {
-                _controller!.seekTo(Duration.zero);
-                _controller!.play();
-              },
-              borderRadius: BorderRadius.circular(20),
-              child: Padding(
-                padding: const EdgeInsets.all(4),
-                child: Icon(
-                  Icons.replay_rounded,
-                  size: isSmallHeight ? 22 : 28,
-                  color: AppTheme.successGreen,
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.refresh_rounded, size: 14, color: Colors.white),
+                    SizedBox(width: 4),
+                    Text(
+                      'إعادة التحميل',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
           ],
         ),
-      ],
+      ),
     );
+  }
+
+  Widget _buildVideoWidget() {
+    final aspect = _controller!.value.aspectRatio > 0
+        ? _controller!.value.aspectRatio
+        : 16 / 9;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.black87,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // الفيديو مع إمكانية الضغط للتشغيل والإيقاف
+            GestureDetector(
+              onTap: _togglePlay,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  AspectRatio(
+                    aspectRatio: aspect,
+                    child: VideoPlayer(_controller!),
+                  ),
+                  if (!_controller!.value.isPlaying)
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.5),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white70, width: 2),
+                      ),
+                      child: const Icon(
+                        Icons.play_arrow_rounded,
+                        size: 36,
+                        color: Colors.white,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+
+            // شريط التحكم الصغير المدمج
+            Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: widget.compact ? 8 : 12,
+                vertical: widget.compact ? 3 : 5,
+              ),
+              color: const Color(0xFF1E293B),
+              child: Row(
+                children: [
+                  // زر تشغيل / إيقاف
+                  InkWell(
+                    onTap: _togglePlay,
+                    borderRadius: BorderRadius.circular(15),
+                    child: Padding(
+                      padding: const EdgeInsets.all(3),
+                      child: Icon(
+                        _controller!.value.isPlaying
+                            ? Icons.pause_rounded
+                            : Icons.play_arrow_rounded,
+                        size: widget.compact ? 20 : 24,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(width: 6),
+
+                  // شريط التقدم
+                  Expanded(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: SizedBox(
+                        height: 6,
+                        child: VideoProgressIndicator(
+                          _controller!,
+                          allowScrubbing: true,
+                          colors: VideoProgressColors(
+                            playedColor: const Color(0xFF38BDF8),
+                            bufferedColor: const Color(0xFF0284C7).withValues(alpha: 0.5),
+                            backgroundColor: Colors.white24,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(width: 6),
+
+                  // زر إعادة
+                  InkWell(
+                    onTap: () {
+                      _controller!.seekTo(Duration.zero);
+                      _controller!.play();
+                      setState(() {});
+                    },
+                    borderRadius: BorderRadius.circular(15),
+                    child: Padding(
+                      padding: const EdgeInsets.all(3),
+                      child: Icon(
+                        Icons.replay_rounded,
+                        size: widget.compact ? 18 : 22,
+                        color: const Color(0xFF4ADE80),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _togglePlay() {
+    setState(() {
+      if (_controller!.value.isPlaying) {
+        _controller!.pause();
+      } else {
+        _controller!.play();
+      }
+    });
   }
 }
