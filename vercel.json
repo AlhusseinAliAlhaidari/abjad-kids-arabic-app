@@ -1,8 +1,9 @@
-{
+﻿{
   "version": 2,
+  "cleanUrls": true,
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/((?!assets/|favicon.png|manifest.json|flutter.js|flutter_service_worker.js|main.dart.js|version.json).*)",
       "destination": "/index.html"
     }
   ]

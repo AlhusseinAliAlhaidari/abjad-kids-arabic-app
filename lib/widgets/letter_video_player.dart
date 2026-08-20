@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
+﻿import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import '../theme/app_theme.dart';
@@ -25,27 +25,37 @@ class _LetterVideoPlayerState extends State<LetterVideoPlayer> {
 
   Future<void> _initializeVideo() async {
     final fileName = _getLetterFileName(widget.letter);
+    final assetPath = 'assets/videos/letters/$fileName.mp4';
+
     try {
       if (kIsWeb) {
-        // على الويب: flutter يُخدِّم assets عبر HTTP تحت assets/
-        final uri = Uri.base.resolve('assets/videos/letters/$fileName.mp4');
-        print('🎥 [Web] تحميل الفيديو: $uri');
-        _controller = VideoPlayerController.networkUrl(uri);
+        // تجربة تحميل الفيديو عبر الرابط المرمز المناسب للمتصفحات و Vercel
+        final encodedFileName = Uri.encodeComponent('$fileName.mp4');
+        final webUri = Uri.base.resolve('assets/videos/letters/$encodedFileName');
+        print('🎥 [Web] تحميل الفيديو المرمز: $webUri');
+        
+        try {
+          _controller = VideoPlayerController.networkUrl(webUri);
+          await _controller!.initialize();
+        } catch (webErr) {
+          print('⚠️ المحاولة الأولى فشلت، جاري تجربة controller.asset: $webErr');
+          _controller?.dispose();
+          _controller = VideoPlayerController.asset(assetPath);
+          await _controller!.initialize();
+        }
       } else {
-        final assetPath = 'assets/videos/letters/$fileName.mp4';
         print('🎥 [Native] تحميل الفيديو: $assetPath');
         _controller = VideoPlayerController.asset(assetPath);
+        await _controller!.initialize();
       }
-
-      await _controller!.initialize();
 
       if (mounted) {
         setState(() {
           _isInitialized = true;
           _hasError = false;
         });
-        _controller!.play();
         _controller!.setLooping(true);
+        _controller!.play();
       }
     } catch (e) {
       print('❌ خطأ في تحميل الفيديو: $e');
@@ -100,7 +110,7 @@ class _LetterVideoPlayerState extends State<LetterVideoPlayer> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(20),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(25),
@@ -108,7 +118,7 @@ class _LetterVideoPlayerState extends State<LetterVideoPlayer> {
           BoxShadow(
             color: AppTheme.successGreen.withOpacity(0.2),
             blurRadius: 15,
-            offset: Offset(0, 5),
+            offset: const Offset(0, 5),
           ),
         ],
       ),
@@ -117,9 +127,9 @@ class _LetterVideoPlayerState extends State<LetterVideoPlayer> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.play_circle, color: AppTheme.successGreen, size: 28),
-              SizedBox(width: 10),
-              Text(
+              const Icon(Icons.play_circle, color: AppTheme.successGreen, size: 28),
+              const SizedBox(width: 10),
+              const Text(
                 'فيديو رسم الحرف',
                 style: TextStyle(
                   fontSize: 18,
@@ -129,7 +139,7 @@ class _LetterVideoPlayerState extends State<LetterVideoPlayer> {
               ),
             ],
           ),
-          SizedBox(height: 15),
+          const SizedBox(height: 15),
 
           if (_hasError)
             _buildErrorWidget()
@@ -143,7 +153,7 @@ class _LetterVideoPlayerState extends State<LetterVideoPlayer> {
   }
 
   Widget _buildLoadingWidget() {
-    return Container(
+    return const SizedBox(
       height: 200,
       child: Center(
         child: Column(
@@ -153,7 +163,7 @@ class _LetterVideoPlayerState extends State<LetterVideoPlayer> {
             SizedBox(height: 10),
             Text(
               'جاري تحميل الفيديو...',
-              style: TextStyle(color: Colors.grey[600]),
+              style: TextStyle(color: Colors.grey),
             ),
           ],
         ),
@@ -162,7 +172,7 @@ class _LetterVideoPlayerState extends State<LetterVideoPlayer> {
   }
 
   Widget _buildErrorWidget() {
-    return Container(
+    return SizedBox(
       height: 200,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -172,38 +182,39 @@ class _LetterVideoPlayerState extends State<LetterVideoPlayer> {
             size: 60,
             color: AppTheme.primarySkyBlue.withOpacity(0.5),
           ),
-          SizedBox(height: 15),
+          const SizedBox(height: 15),
           Text(
             'فيديو رسم الحرف ${widget.letter}',
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
               color: AppTheme.primarySkyBlue,
             ),
           ),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             decoration: BoxDecoration(
               color: AppTheme.lightSkyBlue.withOpacity(0.2),
               borderRadius: BorderRadius.circular(15),
             ),
             child: Column(
               children: [
-                Text(
-                  'الفيديوهات متوفرة في تطبيق الهاتف',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: AppTheme.textDark,
-                    fontWeight: FontWeight.w600,
+                ElevatedButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      _hasError = false;
+                      _isInitialized = false;
+                    });
+                    _initializeVideo();
+                  },
+                  icon: const Icon(Icons.refresh, size: 18),
+                  label: const Text('إعادة المحاولة'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primarySkyBlue,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   ),
-                  textAlign: TextAlign.center,
-                ),
-                SizedBox(height: 5),
-                Text(
-                  'يمكنك متابعة التعلم باستخدام الصوت والأمثلة',
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                  textAlign: TextAlign.center,
                 ),
               ],
             ),
@@ -223,11 +234,10 @@ class _LetterVideoPlayerState extends State<LetterVideoPlayer> {
             child: VideoPlayer(_controller!),
           ),
         ),
-        SizedBox(height: 15),
+        const SizedBox(height: 15),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // زر التشغيل/الإيقاف
             IconButton(
               icon: Icon(
                 _controller!.value.isPlaying
@@ -246,10 +256,9 @@ class _LetterVideoPlayerState extends State<LetterVideoPlayer> {
                 });
               },
             ),
-            SizedBox(width: 20),
-            // زر إعادة التشغيل
+            const SizedBox(width: 20),
             IconButton(
-              icon: Icon(Icons.replay, size: 40, color: AppTheme.successGreen),
+              icon: const Icon(Icons.replay, size: 40, color: AppTheme.successGreen),
               onPressed: () {
                 _controller!.seekTo(Duration.zero);
                 _controller!.play();
@@ -257,8 +266,7 @@ class _LetterVideoPlayerState extends State<LetterVideoPlayer> {
             ),
           ],
         ),
-        SizedBox(height: 10),
-        // شريط التقدم
+        const SizedBox(height: 10),
         VideoProgressIndicator(
           _controller!,
           allowScrubbing: true,
